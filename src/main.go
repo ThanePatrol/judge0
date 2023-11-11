@@ -28,14 +28,17 @@ type token struct {
 	Token string `json:"token"`
 }
 
+type result struct {
+	Stdout string `json:"stdout"`
+	Stderr string `json:"stderr"`
+	ExitCode int `json:"exit_code"`
+	Runtime float32 `json:"time"`
+	CompileOutput string `json:"compile_output"`
+}
+
 func main() {
 	baseUrl := "http://localhost:2358/"
 	postStr := map[string]string{
-//		"source_code": `#include <stdio.h>\n\nint main(void) {\n  char name[10];\n  scanf(\"%s\", name);\n  printf(\"hello, %s\n\", name);\n  return 0;\n}`,
-//		"language_id": "4",
-//		"stdin": "world",
-//	}
-
 		"source_code": "print('Hello World!')",
 		"language_id": "71", //python3
 		//"number_of_runs": "1",
@@ -60,7 +63,17 @@ func main() {
 	}		
 	fmt.Println(tokenStr)
 
-	rsp, err = http.Get(baseUrl + "/languages/71")
+	rsp, err = http.Get(baseUrl + "submissions/" + tokenStr.Token + "?base64_encoded=false&fields=stdout,stderr,exit_code,time,compile_output")
+	var resStr result
+	
+	jsonParser = json.NewDecoder(rsp.Body)
+	if err = jsonParser.Decode(&resStr); err != nil {
+		fmt.Println("err: ",err)
+	}		
+	
+
+	fmt.Println()
+
 
 	if err != nil {
 		fmt.Println("err: ",err)
