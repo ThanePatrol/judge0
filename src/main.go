@@ -23,18 +23,26 @@ import (
 //  "max_file_size": 1024
 //}
 //https://localhost:2358/submissions/?base64_encoded=false&wait=false
+
+type token struct {
+	Token string `json:"token"`
+}
+
 func main() {
 	baseUrl := "http://localhost:2358/"
 	postStr := map[string]string{
+//		"source_code": `#include <stdio.h>\n\nint main(void) {\n  char name[10];\n  scanf(\"%s\", name);\n  printf(\"hello, %s\n\", name);\n  return 0;\n}`,
+//		"language_id": "4",
+//		"stdin": "world",
+//	}
+
 		"source_code": "print('Hello World!')",
 		"language_id": "71", //python3
 		//"number_of_runs": "1",
 		//"stdin": "",
 		//"expected_output": "Hello World!",
 	}
-
 	jsonValue, _ := json.Marshal(postStr)
-	fmt.Println(jsonValue)
 
 
 	rsp, err := http.Post(baseUrl + "submissions/?base64_encoded=false&wait=false", "application/json", bytes.NewBuffer(jsonValue))
@@ -42,7 +50,15 @@ func main() {
 		fmt.Println("err: ",err)
 		return
 	}
-	fmt.Println(rsp.Body)
+
+	jsonParser := json.NewDecoder(rsp.Body)
+
+	var tokenStr token 
+
+	if err = jsonParser.Decode(&tokenStr); err != nil {
+		fmt.Println("err: ",err)
+	}		
+	fmt.Println(tokenStr)
 
 	rsp, err = http.Get(baseUrl + "/languages/71")
 
