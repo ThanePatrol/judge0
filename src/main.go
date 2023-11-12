@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"bytes"
+	"io"
+	"os"
+	"time"
 )
 
 //{
@@ -31,21 +34,45 @@ type token struct {
 type result struct {
 	Stdout string `json:"stdout"`
 	Stderr string `json:"stderr"`
-	ExitCode int `json:"exit_code"`
-	Runtime float32 `json:"time"`
 	CompileOutput string `json:"compile_output"`
+	ExitCode int `json:"exit_code"`
+	Finished string `json:"finished_at"` 
+	Runtime float32 `json:"time"`
+}
+
+type Submission struct {
+    SourceCode               string `json:"source_code"`
+    LanguageID               int    `json:"language_id"`
+    NumberOfRuns             int    `json:"number_of_runs"`
+    RedirectStderrToStdout   bool   `json:"redirect_stderr_to_stdout"`
+}
+
+func index(w http.ResponseWriter, req *http.Request) {
+
+	file, err := os.ReadFile("resources/index.html")
+	if err != nil {
+		fmt.Fprintf(w, "<h1>hello, couldn't read index.html</h1>")
+		return
+	} 
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write(file)
+}
+
+func getLanguage(w http.ResponseWriter, res *http.Response) {
+
+
 }
 
 func main() {
 	baseUrl := "http://localhost:2358/"
-	postStr := map[string]string{
-		"source_code": "print('Hello World!')",
-		"language_id": "71", //python3
-		//"number_of_runs": "1",
-		//"stdin": "",
-		//"expected_output": "Hello World!",
+	postObj := Submission{
+		SourceCode: `print("Hello world!")`,
+		LanguageID: 71, // Python 3
+		NumberOfRuns: 1,
+		RedirectStderrToStdout: true,
 	}
-	jsonValue, _ := json.Marshal(postStr)
+	jsonValue, _ := json.Marshal(postObj)
 
 
 	rsp, err := http.Post(baseUrl + "submissions/?base64_encoded=false&wait=false", "application/json", bytes.NewBuffer(jsonValue))
@@ -56,28 +83,40 @@ func main() {
 
 	jsonParser := json.NewDecoder(rsp.Body)
 
+
 	var tokenStr token 
 
 	if err = jsonParser.Decode(&tokenStr); err != nil {
 		fmt.Println("err: ",err)
 	}		
 	fmt.Println(tokenStr)
+	s := tokenStr.Token
+	fmt.Println(s)
+	getSubUrl := baseUrl + "submissions/" + tokenStr.Token + "?base64_encoded=false&fields=stdout,stderr,exit_code,time,compile_output,finished_at"
+	fmt.Println(getSubUrl)
 
-	rsp, err = http.Get(baseUrl + "submissions/" + tokenStr.Token + "?base64_encoded=false&fields=stdout,stderr,exit_code,time,compile_output")
-	var resStr result
-	
-	jsonParser = json.NewDecoder(rsp.Body)
-	if err = jsonParser.Decode(&resStr); err != nil {
-		fmt.Println("err: ",err)
-	}		
-	
+	rsp.Body.Close()
 
-	fmt.Println()
+	time.Sleep(3 * time.Second)
+
+	rsp, err = http.Get(getSubUrl)
+
+	bodyBy, _ := io.ReadAll(rsp.Body)
+	fmt.Println(string(bodyBy))
+
+//	fmt.Println(resStr.Stdout)
 
 
 	if err != nil {
 		fmt.Println("err: ",err)
 		return
 	}
+
+	fs := http.FileServer(http.Dir("resources"))
+	http.Handle("/resources/", http.StripPrefix("/resources/", fs))
+
+
+	http.HandleFunc("/", index)
+	http.ListenAndServe(":8080", nil)
 	//fmt.Println(rsp)
 }

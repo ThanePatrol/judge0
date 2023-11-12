@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Competitive Programming Platform</title>
+<style>
+  body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+  }
+  .container {
+    display: flex;
+    justify-content: space-between;
+  }
+  .problem-section, .editor-section {
+    width: 49%;
+    background-color: #fff;
+    margin: 10px;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    height: calc(100vh - 20px);
+    overflow-y: auto;
+  }
+  .problem-section h1 {
+    font-size: 24px;
+  }
+  .editor-section {
+    display: flex;
+    flex-direction: column;
+  }
+  select, button {
+    margin: 10px 0;
+  }
+  #editor {
+    height: 70%;
+    border: 1px solid #ccc;
+  }
+  #console {
+    height: 20%;
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    margin-top: 10px;
+    font-family: monospace;
+  }
+</style>
+<script src="https://unpkg.com/htmx.org@1.9.5" integrity="sha384-xcuj3WpfgjlKF+FXhSQFQ0ZNr39ln+hwjN3npfM9VBnUskLolQAcN80McRIVOPuO" crossorigin="anonymous"></script>
+</head>
+<body>
+
+<div class="container">
+  <div class="problem-section">
+    <h1>Implement a Rope</h1>
+    <!-- Problem description goes here -->
+    <p>Here will be the problem statement...</p>
+    <!-- Add more HTML for problem constraints, examples, etc. -->
+  </div>
+  
+  <div class="editor-section">
+    <select id="language-selector"
+		hx-get="/languages"
+		hx-trigger="select"
+		hx-target="#editor"
+		hx-swap="innerHTML"
+		>
+      <option value="python">Python</option>
+      <option value="javascript">JavaScript</option>
+      <option value="java">Java</option>
+      <option value="cpp">C++</option>
+    </select>
+    
+    <div id="editor">
+	</div>
+    
+    <button onclick="submitCode()">Run Code</button>
+    
+    <div id="console">
+      <!-- Console output will be displayed here -->
+      Console output...
+    </div>
+  </div>
+</div>
+
+<script>
+  function submitCode() {
+    // Function to handle code submission
+    var code = document.getElementById('editor').value;
+    var language = document.getElementById('language-selector').value;
+    // Use AJAX or Fetch API to send the code to Judge0 API
+    // Update console with the output
+  }
+</script>
+
+<script src="editor.bundle.js"></script>
+
+</body>
+</html>

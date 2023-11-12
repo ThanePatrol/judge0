@@ -13,6 +13,9 @@ mkShell {
     gocode-gomod
     godef
     golint
+    bun
+    nodePackages.rollup
+    nodejs_20
   ];
 }
 
