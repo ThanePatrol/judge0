@@ -48,10 +48,10 @@ type Submission struct {
 }
 
 func index(w http.ResponseWriter, req *http.Request) {
-
 	file, err := os.ReadFile("resources/index.html")
 	if err != nil {
 		fmt.Fprintf(w, "<h1>hello, couldn't read index.html</h1>")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	} 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -59,9 +59,14 @@ func index(w http.ResponseWriter, req *http.Request) {
 	w.Write(file)
 }
 
+// TODO return the JS bundle of the editor for that specific language
 func getLanguage(w http.ResponseWriter, res *http.Response) {
 
+}
 
+// TODO parse the request and send it to the judge0 api
+func postSubmission(w http.ResponseWriter, req *http.Request) {
+	
 }
 
 func main() {
