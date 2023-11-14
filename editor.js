@@ -14,7 +14,6 @@ let myView = new EditorView({
 	],
 	parent: document.querySelector("#editor")
 })
-myView.lineWrapping = true;
 myView.dom.style.fontSize = "14px";
 myView.theme = "ambiance";
 

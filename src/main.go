@@ -47,6 +47,17 @@ type Submission struct {
     RedirectStderrToStdout   bool   `json:"redirect_stderr_to_stdout"`
 }
 
+type UserSubmission struct {
+	SourceCode string `json:"source_code"`
+	Lang string `json:"language"`
+}
+
+var mapLang = map[string]int{
+	"java": 62,
+	"python": 71,
+	"cpp": 54,
+}
+
 func index(w http.ResponseWriter, req *http.Request) {
 	file, err := os.ReadFile("resources/index.html")
 	if err != nil {
@@ -61,18 +72,30 @@ func index(w http.ResponseWriter, req *http.Request) {
 
 // TODO return the JS bundle of the editor for that specific language
 func getLanguage(w http.ResponseWriter, res *http.Response) {
-
 }
 
 // TODO parse the request and send it to the judge0 api
 func postSubmission(w http.ResponseWriter, req *http.Request) {
-	
+	decoder := json.NewDecoder(req.Body)
+	var sub UserSubmission
+	err := decoder.Decode(&sub)
+	if err != nil {
+		fmt.Println("err: ",err)
+		return
+	}
+	doSubmission(sub)
+
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusConflict)
+	w.Write([]byte("<h1>Done</h1>"))
 }
 
-func main() {
+func doSubmission(sub UserSubmission) {
+	
 	baseUrl := "http://localhost:2358/"
 	postObj := Submission{
-		SourceCode: `print("Hello world!")`,
+		SourceCode: sub.SourceCode,
 		LanguageID: 71, // Python 3
 		NumberOfRuns: 1,
 		RedirectStderrToStdout: true,
@@ -85,7 +108,6 @@ func main() {
 		fmt.Println("err: ",err)
 		return
 	}
-
 	jsonParser := json.NewDecoder(rsp.Body)
 
 
@@ -102,26 +124,20 @@ func main() {
 
 	rsp.Body.Close()
 
-	time.Sleep(3 * time.Second)
+	time.Sleep(1 * time.Second)
 
 	rsp, err = http.Get(getSubUrl)
 
 	bodyBy, _ := io.ReadAll(rsp.Body)
 	fmt.Println(string(bodyBy))
+}
 
-//	fmt.Println(resStr.Stdout)
-
-
-	if err != nil {
-		fmt.Println("err: ",err)
-		return
-	}
-
+func main() {
 	fs := http.FileServer(http.Dir("resources"))
 	http.Handle("/resources/", http.StripPrefix("/resources/", fs))
 
 
 	http.HandleFunc("/", index)
+	http.HandleFunc("/api/submit", postSubmission)
 	http.ListenAndServe(":8080", nil)
-	//fmt.Println(rsp)
 }

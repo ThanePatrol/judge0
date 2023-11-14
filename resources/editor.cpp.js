@@ -25530,7 +25530,7 @@
 
    let myView = new EditorView({
    	doc:
-`class Solution {\npublic: \n    int solve(int A) {\n        return 0;    }\n};`   ,
+`class Solution {\npublic: \n    int solve(int A) {\n        return 0;\n    }\n};`   ,
    	extensions: [
    		basicSetup,
 
@@ -25539,7 +25539,6 @@
    	],
    	parent: document.querySelector("#editor")
    });
-   myView.lineWrapping = true;
    myView.dom.style.fontSize = "14px";
    myView.theme = "ambiance";
 

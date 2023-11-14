@@ -64,14 +64,8 @@
   </div>
   
   <div class="editor-section">
-    <select id="language-selector"
-		hx-get="/languages"
-		hx-trigger="select"
-		hx-target="#editor"
-		hx-swap="innerHTML"
-		>
+    <select id="language-selector">
       <option value="python">Python</option>
-      <option value="javascript">JavaScript</option>
       <option value="java">Java</option>
       <option value="cpp">C++</option>
     </select>
@@ -88,17 +82,50 @@
   </div>
 </div>
 
+
+<script id="editor-script" src="/resources/editor.python.js"></script>
+
 <script>
   function submitCode() {
-    // Function to handle code submission
-    var code = document.getElementById('editor').value;
-    var language = document.getElementById('language-selector').value;
+    let language = document.getElementById('language-selector').value;
+	let editor = document.querySelector('.cm-content');
+	let codeText = Array.from(document.querySelectorAll(".cm-line")).map(e => e.textContent).join('\n');
+	console.log(codeText);
+
+	let data = {"language": language, "source_code": codeText};
+
+	fetch('/api/submit', {
+		method: 'POST',
+		body: JSON.stringify(data),
+		headers: {
+			'Content-Type': 'application/json'
+		}
+	}).then(response => {
+		console.log(response);
+	});
+
     // Use AJAX or Fetch API to send the code to Judge0 API
     // Update console with the output
+
+	
   }
+
+  let selector = document.getElementById('language-selector');
+  selector.addEventListener('change', (event) => {
+	let div = document.getElementById('editor');
+	div.innerHTML = '';
+
+	let lang = selector.value;
+	let script = document.getElementById('editor-script');
+	
+	script.parentNode.removeChild(script);
+	let newEditor = document.createElement('script');
+	newEditor.type = 'text/javascript';
+	script.async = true;
+	newEditor.id = 'editor-script';
+	newEditor.src = '/resources/editor.' + lang + '.js';
+	document.body.appendChild(newEditor);
+  });
 </script>
-
-<script src="editor.cpp.js"></script>
-
 </body>
 </html>
