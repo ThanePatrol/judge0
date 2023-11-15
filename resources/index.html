@@ -94,15 +94,20 @@
 
 	let data = {"language": language, "source_code": codeText};
 
-	fetch('/api/submit', {
-		method: 'POST',
-		body: JSON.stringify(data),
-		headers: {
-			'Content-Type': 'application/json'
-		}
-	}).then(response => {
-		console.log(response);
-	});
+    fetch('/api/submit', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(response => {
+        return response.text(); // Convert the response stream to text
+    }).then(html => {
+        document.getElementById('console').innerHTML = html; // Update the console with the HTML content
+        console.log(html);
+    }).catch(error => {
+        console.error('Error:', error);
+    });
 
     // Use AJAX or Fetch API to send the code to Judge0 API
     // Update console with the output

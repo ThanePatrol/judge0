@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"net/http"
 	"bytes"
-	"io"
 	"os"
 	"time"
 )
@@ -37,7 +37,7 @@ type result struct {
 	CompileOutput string `json:"compile_output"`
 	ExitCode int `json:"exit_code"`
 	Finished string `json:"finished_at"` 
-	Runtime float32 `json:"time"`
+	Runtime string `json:"time"`
 }
 
 type Submission struct {
@@ -70,10 +70,6 @@ func index(w http.ResponseWriter, req *http.Request) {
 	w.Write(file)
 }
 
-// TODO return the JS bundle of the editor for that specific language
-func getLanguage(w http.ResponseWriter, res *http.Response) {
-}
-
 // TODO parse the request and send it to the judge0 api
 func postSubmission(w http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
@@ -83,22 +79,33 @@ func postSubmission(w http.ResponseWriter, req *http.Request) {
 		fmt.Println("err: ",err)
 		return
 	}
-	doSubmission(sub)
+	subOutput, err := doSubmission(sub)
 
+	htmlStr := "<h2>Submission Output</h2><br>"
+	if subOutput.Stderr != "" {
+		s := strings.Replace(subOutput.CompileOutput, "\n", "<br>", -1)
+		htmlStr += "<h3>compile output:" + s + "</h3><br>"
+		s = strings.Replace(subOutput.Stderr, "\n", "<br>", -1)
+		htmlStr += "<h3>stderr:" + s + "</h3><br>"
+	} else {
+		htmlStr += "<h3>stdout:" + subOutput.Stdout + "</h3><br>"
+		htmlStr += "<h3>runtime:" + subOutput.Runtime + "s</h3><br>"
+	}
+	fmt.Println(htmlStr)
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.WriteHeader(http.StatusConflict)
-	w.Write([]byte("<h1>Done</h1>"))
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, htmlStr)
 }
 
-func doSubmission(sub UserSubmission) {
+func doSubmission(sub UserSubmission) (result, error) {
 	
 	baseUrl := "http://localhost:2358/"
 	postObj := Submission{
 		SourceCode: sub.SourceCode,
-		LanguageID: 71, // Python 3
+		LanguageID: mapLang[sub.Lang],
 		NumberOfRuns: 1,
-		RedirectStderrToStdout: true,
+		RedirectStderrToStdout: false,
 	}
 	jsonValue, _ := json.Marshal(postObj)
 
@@ -106,7 +113,7 @@ func doSubmission(sub UserSubmission) {
 	rsp, err := http.Post(baseUrl + "submissions/?base64_encoded=false&wait=false", "application/json", bytes.NewBuffer(jsonValue))
 	if err != nil {
 		fmt.Println("err: ",err)
-		return
+		return result{}, err
 	}
 	jsonParser := json.NewDecoder(rsp.Body)
 
@@ -116,20 +123,21 @@ func doSubmission(sub UserSubmission) {
 	if err = jsonParser.Decode(&tokenStr); err != nil {
 		fmt.Println("err: ",err)
 	}		
-	fmt.Println(tokenStr)
-	s := tokenStr.Token
-	fmt.Println(s)
 	getSubUrl := baseUrl + "submissions/" + tokenStr.Token + "?base64_encoded=false&fields=stdout,stderr,exit_code,time,compile_output,finished_at"
-	fmt.Println(getSubUrl)
 
 	rsp.Body.Close()
-
+	
+	// give it some time to compile and execute
 	time.Sleep(1 * time.Second)
 
 	rsp, err = http.Get(getSubUrl)
+	jsonParser = json.NewDecoder(rsp.Body)
+	subResult := result{}
+	if err = jsonParser.Decode(&subResult); err != nil {
+		fmt.Println("err: ",err)
+	}		
 
-	bodyBy, _ := io.ReadAll(rsp.Body)
-	fmt.Println(string(bodyBy))
+	return subResult, nil
 }
 
 func main() {
